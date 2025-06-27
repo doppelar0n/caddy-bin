@@ -53,16 +53,21 @@ jobs:
         if: steps.check-release.outputs.skip == 'false'
         run: |
           xcaddy build \
-            --output dist/caddy-${{ matrix.arch }} \
+            --output caddy-${{ matrix.arch }} \
             --with github.com/lucaslorentz/caddy-docker-proxy/v2
           mkdir -p dist
+      
+      - name: Generate SHA256
+        run: sha256sum caddy-${{ matrix.arch }} > caddy-${{ matrix.arch }}.sha256
 
       - name: Upload Artifact
         if: steps.check-release.outputs.skip == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: caddy-${{ matrix.arch }}
-          path: dist/caddy-${{ matrix.arch }}
+          path: |
+            caddy-${{ matrix.arch }}
+            caddy-${{ matrix.arch }}.sha256
 
   release:
     needs: build
