@@ -26,9 +26,7 @@ jobs:
         id: get-version
         run: |
           LATEST_VERSION=$(curl -s https://api.github.com/repos/caddyserver/caddy/releases/latest | jq -r '.tag_name')
-          echo "::set-output name=latest_version::${LATEST_VERSION}"
-        outputs:
-          latest_version: ${{ steps.get-version.outputs.latest_version }}
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
 
       - name: Check if Release Exists
         id: check-release
