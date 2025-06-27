@@ -77,22 +77,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: caddy-amd64
-          path: dist/caddy-amd64
 
       - name: Download arm64 Binary
         if: needs.build.outputs.skip == 'false'
         uses: actions/download-artifact@v4
         with:
           name: caddy-arm64
-          path: dist/caddy-arm64
 
       - name: Create Release
         if: needs.build.outputs.skip == 'false'
         uses: ncipollo/release-action@v1
         with:
-          artifacts: |
-            dist/caddy-amd64
-            dist/caddy-arm64
+          artifacts: "caddy-*"
           token: ${{ secrets.PAT_TOKEN }}
           tag: ${{ needs.build.outputs.latest_version }}
           name: Caddy ${{ needs.build.outputs.latest_version }}
