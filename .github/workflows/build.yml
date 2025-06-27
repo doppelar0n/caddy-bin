@@ -85,7 +85,7 @@ jobs:
           artifacts: |
             dist/caddy-amd64
             dist/caddy-arm64
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
           tag: ${{ needs.build.outputs.latest_version }}
           name: Caddy ${{ needs.build.outputs.latest_version }}
           commit: ${{ github.sha }}
