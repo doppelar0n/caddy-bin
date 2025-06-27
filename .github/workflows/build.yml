@@ -1,0 +1,78 @@
+name: Build Caddy with Plugins
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Get Latest Caddy Version
+        id: get-version
+        run: |
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/caddyserver/caddy/releases/latest | jq -r '.tag_name')
+          echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
+
+      - name: Check if Release Exists
+        id: check-release
+        run: |
+          if curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ env.LATEST_VERSION }} | jq -e '.id' > /dev/null; then
+            echo "Release exists."
+            echo "SKIP=true" >> $GITHUB_ENV
+          else
+            echo "SKIP=false" >> $GITHUB_ENV
+
+      - name: Skip Job if Release Exists
+        if: env.SKIP == 'true'
+        run: echo "Release already exists. Skipping build."
+
+      - name: Install xcaddy
+        if: env.SKIP == 'false'
+        run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+      - name: Build Caddy
+        if: env.SKIP == 'false'
+        run: |
+          xcaddy build \
+            --output dist/caddy-${{ matrix.arch }} \
+            --with github.com/lucaslorentz/caddy-docker-proxy/v2
+          mkdir -p dist
+
+      - name: Upload Artifact
+        if: env.SKIP == 'false'
+        uses: actions/upload-artifact@v3
+        with:
+          name: caddy-${{ matrix.arch }}
+          path: dist/caddy-${{ matrix.arch }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Built Binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: caddy-amd64
+          path: dist/caddy-amd64
+        with:
+          name: caddy-arm64
+          path: dist/caddy-arm64
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: |
+            dist/caddy-amd64
+            dist/caddy-arm64
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.LATEST_VERSION }}
+          name: Caddy ${{ env.LATEST_VERSION }}
+          commit: ${{ github.sha }}
