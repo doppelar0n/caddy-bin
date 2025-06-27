@@ -87,7 +87,7 @@ jobs:
           path: dist/caddy-arm64
 
       - name: Create Release
-        if: $needs.build.outputs.skip == 'false'
+        if: needs.build.outputs.skip == 'false'
         uses: ncipollo/release-action@v1
         with:
           artifacts: |
