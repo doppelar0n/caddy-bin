@@ -13,6 +13,7 @@ jobs:
         arch: [amd64, arm64]
     outputs:
       latest_version: ${{ steps.get-version.outputs.latest_version }}
+      skip: ${{ steps.check-release.outputs.skip }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -35,21 +36,21 @@ jobs:
           echo "API Response: $RESPONSE"
           if echo "$RESPONSE" | jq -e '.id' > /dev/null; then
             echo "Release exists."
-            echo "SKIP=true" >> $GITHUB_ENV
+            echo "SKIP=true" >> $GITHUB_OUTPUT
           else
-            echo "SKIP=false" >> $GITHUB_ENV
+            echo "SKIP=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Skip Job if Release Exists
-        if: env.SKIP == 'true'
+        if: ${{ steps.check-release.outputs.skip}} == 'true'
         run: echo "Release already exists. Skipping build."
 
       - name: Install xcaddy
-        if: env.SKIP == 'false'
+        if: ${{ steps.check-release.outputs.skip}} == 'false'
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 
       - name: Build Caddy
-        if: env.SKIP == 'false'
+        if: ${{ steps.check-release.outputs.skip}} == 'false'
         run: |
           xcaddy build \
             --output dist/caddy-${{ matrix.arch }} \
@@ -57,7 +58,7 @@ jobs:
           mkdir -p dist
 
       - name: Upload Artifact
-        if: env.SKIP == 'false'
+        if: ${{ steps.check-release.outputs.skip}} == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: caddy-${{ matrix.arch }}
@@ -67,19 +68,26 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Skip Job if Release Exists
+        if: ${{ needs.build.outputs.skip}} == 'true'
+        run: echo "Release already exists."
+
       - name: Download amd64 Binary
+        if: ${{ needs.build.outputs.skip}} == 'false'
         uses: actions/download-artifact@v4
         with:
           name: caddy-amd64
           path: dist/caddy-amd64
 
       - name: Download arm64 Binary
+        if: ${{ needs.build.outputs.skip}} == 'false'
         uses: actions/download-artifact@v4
         with:
           name: caddy-arm64
           path: dist/caddy-arm64
 
       - name: Create Release
+        if: ${{ needs.build.outputs.skip}} == 'false'
         uses: ncipollo/release-action@v1
         with:
           artifacts: |
