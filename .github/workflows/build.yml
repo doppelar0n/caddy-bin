@@ -57,11 +57,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download Built Binaries
+      - name: Download amd64 Binary
         uses: actions/download-artifact@v3
         with:
           name: caddy-amd64
           path: dist/caddy-amd64
+
+      - name: Download arm64 Binary
+        uses: actions/download-artifact@v3
         with:
           name: caddy-arm64
           path: dist/caddy-arm64
