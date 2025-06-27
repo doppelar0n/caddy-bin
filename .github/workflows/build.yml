@@ -29,6 +29,7 @@ jobs:
             echo "SKIP=true" >> $GITHUB_ENV
           else
             echo "SKIP=false" >> $GITHUB_ENV
+          fi
 
       - name: Skip Job if Release Exists
         if: env.SKIP == 'true'
