@@ -52,7 +52,7 @@ jobs:
       - name: Build Caddy
         if: steps.check-release.outputs.skip == 'false'
         run: |
-          xcaddy build \
+          GOOS=linux GOARCH=${{ matrix.arch }} xcaddy build \
             --output caddy-${{ matrix.arch }} \
             --with github.com/lucaslorentz/caddy-docker-proxy/v2
           mkdir -p dist
