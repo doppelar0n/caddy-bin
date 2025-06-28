@@ -58,7 +58,7 @@ jobs:
           mkdir -p dist
       
       - name: Generate SHA256
-        if: steps.check-release.outputs.skip == 'true'
+        if: steps.check-release.outputs.skip == 'false'
         run: sha256sum caddy-${{ matrix.arch }} > caddy-${{ matrix.arch }}.sha256
 
       - name: Upload Artifact
