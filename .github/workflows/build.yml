@@ -26,9 +26,16 @@ jobs:
       - name: Get Latest Caddy Version
         id: get-version
         run: |
-          RESPONSE=$(curl -s https://api.github.com/repos/caddyserver/caddy/releases/latest)
-          echo $RESPONSE
-          LATEST_VERSION=$(echo $RESPONSE | jq -r '.tag_name')
+          HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" https://api.github.com/repos/caddyserver/caddy/releases/latest)
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Failed to fetch API response. HTTP Status: $HTTP_STATUS"
+            exit 1
+          fi
+          LATEST_VERSION=$(jq -r '.tag_name' response.json)
+          if [ -z "$LATEST_VERSION" ]; then
+            echo "Failed to parse the latest version from the API response."
+            exit 1
+          fi
           echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
           echo "Latest Caddy version is $LATEST_VERSION"
 
