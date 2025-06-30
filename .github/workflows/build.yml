@@ -27,7 +27,12 @@ jobs:
         id: get-version
         run: |
           LATEST_VERSION=$(curl -s https://api.github.com/repos/caddyserver/caddy/releases/latest | jq -r '.tag_name')
+          if [ -z "$LATEST_VERSION" ]; then
+            echo "Failed to fetch the latest version of Caddy."
+            exit 1
+          fi
           echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "Latest Caddy version is $LATEST_VERSION"
 
       - name: Check if Release Exists
         id: check-release
