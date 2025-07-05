@@ -67,7 +67,6 @@ jobs:
           GOOS=linux GOARCH=${{ matrix.arch }} xcaddy build \
             --output caddy-${{ matrix.arch }} \
             --with github.com/lucaslorentz/caddy-docker-proxy/v2
-          mkdir -p dist
       
       - name: Generate SHA256
         if: steps.check-release.outputs.skip == 'false'
