@@ -47,34 +47,42 @@ jobs:
             if echo "$RESPONSE" | jq -e '.id' > /dev/null; then
               echo "Release exists."
               echo "skip=true" >> $GITHUB_OUTPUT
-              echo "Release already exists. Skipping build."
-              exit 0
             else
               echo "skip=false" >> $GITHUB_OUTPUT
             fi
           fi
 
+      - name: Skip Job if Release Exists
+        if: steps.check-release.outputs.skip == 'true'
+        run: echo "Release already exists. Skipping build."
+
       - name: Checkout Repository
+        if: steps.check-release.outputs.skip == 'false'
         uses: actions/checkout@v4
 
       - name: Set up Go
+        if: steps.check-release.outputs.skip == 'false'
         uses: actions/setup-go@v5
         with:
           go-version: 'stable'
 
       - name: Install xcaddy
+        if: steps.check-release.outputs.skip == 'false'
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 
       - name: Build Caddy
+        if: steps.check-release.outputs.skip == 'false'
         run: |
           GOOS=linux GOARCH=${{ matrix.arch }} xcaddy build \
             --output caddy-${{ matrix.arch }} \
             --with github.com/lucaslorentz/caddy-docker-proxy/v2
       
       - name: Generate SHA256
+        if: steps.check-release.outputs.skip == 'false'
         run: sha256sum caddy-${{ matrix.arch }} > caddy-${{ matrix.arch }}.sha256
 
       - name: Upload Artifact
+        if: steps.check-release.outputs.skip == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: caddy-${{ matrix.arch }}
@@ -88,19 +96,22 @@ jobs:
     steps:
       - name: Skip Job if Release Exists
         if: needs.build.outputs.skip == 'true'
-        run: echo "Release already exists." && exit 0
+        run: echo "Release already exists."
 
       - name: Download amd64 Binary
+        if: needs.build.outputs.skip == 'false'
         uses: actions/download-artifact@v4
         with:
           name: caddy-amd64
 
       - name: Download arm64 Binary
+        if: needs.build.outputs.skip == 'false'
         uses: actions/download-artifact@v4
         with:
           name: caddy-arm64
 
       - name: Create Release
+        if: needs.build.outputs.skip == 'false'
         uses: ncipollo/release-action@v1
         with:
           artifacts: "caddy-*"
